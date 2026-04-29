@@ -1,0 +1,8 @@
+{
+  "IP": "169.254.76.8",
+  "TraceList": "1,3,5,6",
+  "MarkerCount": "5",
+  "MachNo": "EM0357",
+  "MesUrl": "http://twcynmes01.delta.corp/CyntecDataCenter/service/Eqp/Eqp_Portal.asmx",
+  "TestMode": true
+}
