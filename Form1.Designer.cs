@@ -138,6 +138,7 @@ namespace VNA_Data_Grabber
             // 
             // statusStrip1
             // 
+            this.statusStrip1.ImageScalingSize = new System.Drawing.Size(40, 40);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.lblStatus});
             this.statusStrip1.Location = new System.Drawing.Point(0, 463);
@@ -167,7 +168,7 @@ namespace VNA_Data_Grabber
             this.txtMarkerCount.Name = "txtMarkerCount";
             this.txtMarkerCount.Size = new System.Drawing.Size(40, 22);
             this.txtMarkerCount.TabIndex = 11;
-            this.txtMarkerCount.Text = "5";
+            this.txtMarkerCount.Text = "3";
             // 
             // grpMES
             // 
@@ -187,17 +188,6 @@ namespace VNA_Data_Grabber
             this.grpMES.TabIndex = 12;
             this.grpMES.TabStop = false;
             this.grpMES.Text = "MES 整合功能";
-            // 
-            // btnMesEdcUpload
-            // 
-            this.btnMesEdcUpload.Enabled = false;
-            this.btnMesEdcUpload.Location = new System.Drawing.Point(543, 45);
-            this.btnMesEdcUpload.Name = "btnMesEdcUpload";
-            this.btnMesEdcUpload.Size = new System.Drawing.Size(120, 25);
-            this.btnMesEdcUpload.TabIndex = 11;
-            this.btnMesEdcUpload.Text = "2.1 資料上傳 (EDC)";
-            this.btnMesEdcUpload.UseVisualStyleBackColor = true;
-            this.btnMesEdcUpload.Click += new System.EventHandler(this.btnMesEdcUpload_Click);
             // 
             // lblMesUser
             // 
@@ -257,6 +247,17 @@ namespace VNA_Data_Grabber
             this.btnMesTrackOut.Text = "3. 工單出站";
             this.btnMesTrackOut.UseVisualStyleBackColor = true;
             this.btnMesTrackOut.Click += new System.EventHandler(this.btnMesTrackOut_Click);
+            // 
+            // btnMesEdcUpload
+            // 
+            this.btnMesEdcUpload.Enabled = false;
+            this.btnMesEdcUpload.Location = new System.Drawing.Point(543, 45);
+            this.btnMesEdcUpload.Name = "btnMesEdcUpload";
+            this.btnMesEdcUpload.Size = new System.Drawing.Size(120, 25);
+            this.btnMesEdcUpload.TabIndex = 11;
+            this.btnMesEdcUpload.Text = "2.1 資料上傳 (EDC)";
+            this.btnMesEdcUpload.UseVisualStyleBackColor = true;
+            this.btnMesEdcUpload.Click += new System.EventHandler(this.btnMesEdcUpload_Click);
             // 
             // btnMesTrackIn
             // 

@@ -74,6 +74,7 @@ namespace VNA_Data_Grabber
             public string TraceList { get; set; } = "1,3,5,6";
             public string MarkerCount { get; set; } = "5";
             public string MachNo { get; set; } = "VNA001";
+            public string ProjectName { get; set; } = "DefaultProject";
             public string MesUrl { get; set; } = "http://twcynmesqas01/CyntecDataCenter/service/Eqp/Eqp_Portal.asmx";
             public bool TestMode { get; set; } = false;
         }
@@ -136,23 +137,30 @@ namespace VNA_Data_Grabber
         {
             string ip = txtIPAddress.Text.Trim();
             string traceInput = txtTraceList.Text.Trim();
+            string baseName = txtOrderNo.Text.Trim();
+            string projectName = _lastLoadedConfig.ProjectName;
+
+            if (string.IsNullOrEmpty(projectName)) { MessageBox.Show("請輸入 Project Name"); return; }
+            if (string.IsNullOrEmpty(baseName)) { MessageBox.Show("請先輸入工單號碼作為存檔名稱"); return; }
             if (!int.TryParse(txtMarkerCount.Text.Trim(), out int markerCount)) markerCount = 5;
 
             try
             {
                 btnReadData.Enabled = false;
-                UpdateStatus(_lastLoadedConfig.TestMode ? "[測試模式] 正在產生模擬數據..." : "讀取儀器中...", false);
+                UpdateStatus(_lastLoadedConfig.TestMode ? "[測試模式] 正在產生模擬數據..." : "讀取儀器與擷取檔案中...", false);
                 
                 if (_lastLoadedConfig.TestMode)
                 {
                     await Task.Delay(500);
                     _currentSessionData = GenerateMockData(traceInput.Split(','), markerCount);
+                    UpdateStatus("測試數據載入成功 (模擬模式不下載檔案)", true);
                 }
                 else
                 {
-                    _currentSessionData = await Task.Run(() => FetchVnaData(ip, traceInput.Split(','), markerCount));
+                    _currentSessionData = await Task.Run(() => FetchVnaData(ip, traceInput.Split(','), markerCount, projectName, baseName));
+                    UpdateStatus("數據與檔案擷取完成", true);
                 }
-                
+
                 foreach (DataGridViewRow row in dgvManagement.Rows)
                 {
                     if (row.Cells[2].Value?.ToString() == "NO")
@@ -163,9 +171,8 @@ namespace VNA_Data_Grabber
                 }
 
                 DisplayData();
-                UpdateStatus(_lastLoadedConfig.TestMode ? "測試數據載入成功" : "讀取成功", true);
             }
-            catch (Exception ex) { UpdateStatus("讀取失敗: " + ex.Message, false); }
+            catch (Exception ex) { UpdateStatus("讀取失敗: " + ex.Message, false); MessageBox.Show("詳細錯誤: " + ex.ToString()); }
             finally { btnReadData.Enabled = true; }
         }
 
@@ -188,20 +195,35 @@ namespace VNA_Data_Grabber
             return records;
         }
 
-        private List<TraceRecord> FetchVnaData(string ip, string[] traceIds, int markerCount)
+        private List<TraceRecord> FetchVnaData(string ip, string[] traceIds, int markerCount, string projectName, string baseName)
         {
             List<TraceRecord> records = new List<TraceRecord>();
+            string localDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Exports", projectName, baseName);
+            if (!Directory.Exists(localDir)) Directory.CreateDirectory(localDir);
+
+            // E5080B 路徑格式：D:\{ProjectName}\{BaseName}
+            string vnaProjDir = $@"D:\{projectName}";
+            string vnaBaseDir = $@"{vnaProjDir}\{baseName}";
+
             using (TcpClient client = new TcpClient())
             {
                 var connectTask = client.ConnectAsync(ip, VnaPort);
-                if (!connectTask.Wait(TimeoutMs)) throw new Exception("連線儀器逾時。");
+                if (!connectTask.Wait(TimeoutMs * 2)) throw new Exception("連線儀器逾時。");
                 using (NetworkStream stream = client.GetStream())
                 {
-                    stream.ReadTimeout = TimeoutMs;
+                    stream.ReadTimeout = TimeoutMs * 15; 
+
+                    // 1. 建立儀器端目錄 (兩層確保)
+                    SendCheckedCommand(stream, $":MMEMory:MDIR \"{vnaProjDir}\"");
+                    SendCheckedCommand(stream, $":MMEMory:MDIR \"{vnaBaseDir}\"");
+                    System.Threading.Thread.Sleep(200);
+
+                    // 2. 讀取 Marker 數據
                     foreach (string tid in traceIds.Select(s => s.Trim()))
                     {
                         TraceRecord rec = new TraceRecord { TraceNum = tid };
-                        SendCommand(stream, $"CALCulate1:PARameter:MNUMber {tid}");
+                        SendCheckedCommand(stream, $"CALCulate1:PARameter:MNUMber {tid}");
+                        
                         for (int i = 1; i <= markerCount; i++)
                         {
                             SendCommand(stream, $"CALCulate1:MARKer{i}:X?");
@@ -214,10 +236,75 @@ namespace VNA_Data_Grabber
                         SendCommand(stream, "CALCulate1:LIMit:FAIL?");
                         rec.TraceResult = (ReadResponse(stream) == "1") ? "Fail" : "Pass";
                         records.Add(rec);
+
+                        // 3. 儲存 Trace 的 CSV 檔案 (暫時標註)
+                        /*
+                        string vnaCsvPath = $@"{vnaBaseDir}\Tr{tid}.csv";
+                        SendCheckedCommand(stream, $":MMEMory:STORe:DATA \"{vnaCsvPath}\",\"CSV\",\"FDATA\",\"ALL\",1");
+                        System.Threading.Thread.Sleep(500); 
+                        DownloadBinaryFile(stream, vnaCsvPath, Path.Combine(localDir, $"Tr{tid}_CH1.csv"));
+                        */
                     }
+
+                    // 4. 儲存 Touchstone .s4p (使用您驗證成功的指令)
+                    string vnaS4pPath = $@"{vnaBaseDir}\{baseName}.s4p";
+                    SendCheckedCommand(stream, $":CALCulate1:DATA:SNP:PORTs:SAVE \"1,2,3,4\", \"{vnaS4pPath}\"");
+                    System.Threading.Thread.Sleep(1000); 
+                    DownloadBinaryFile(stream, vnaS4pPath, Path.Combine(localDir, $"{baseName}_CH1.s4p"));
+
+                    // 5. 儲存螢幕截圖 .bmp (暫時標註)
+                    /*
+                    string vnaBmpPath = $@"{vnaBaseDir}\{baseName}.bmp";
+                    SendCheckedCommand(stream, $":MMEMory:STORe:IMAGe \"{vnaBmpPath}\"");
+                    System.Threading.Thread.Sleep(1000); 
+                    DownloadBinaryFile(stream, vnaBmpPath, Path.Combine(localDir, $"{baseName}_CH1.bmp"));
+                    */
                 }
             }
             return records;
+        }
+
+        private void SendCheckedCommand(NetworkStream stream, string cmd)
+        {
+            SendCommand(stream, cmd);
+            SendCommand(stream, "SYSTem:ERRor?");
+            string err = ReadResponse(stream);
+            if (!err.Contains("No error"))
+            {
+                this.Invoke(new Action(() => {
+                    txtDisplay.AppendText($"[儀器錯誤] 指令: {cmd} | 訊息: {err}\n");
+                }));
+            }
+        }
+
+        private void DownloadBinaryFile(NetworkStream stream, string vnaFilePath, string localSavePath)
+        {
+            // E5080B 下載檔案建議使用 MMEMory:TRANsfer?
+            SendCommand(stream, $"MMEMory:TRANsfer? \"{vnaFilePath}\"");
+
+            // 讀取 IEEE 488.2 Block Header (#<digits><length>)
+            int headerStart = stream.ReadByte();
+            if (headerStart != '#') return;
+
+            int numDigits = stream.ReadByte() - '0';
+            byte[] lengthBytes = new byte[numDigits];
+            stream.Read(lengthBytes, 0, numDigits);
+            int fileLength = int.Parse(Encoding.ASCII.GetString(lengthBytes));
+
+            // 讀取檔案內容
+            byte[] fileData = new byte[fileLength];
+            int totalRead = 0;
+            while (totalRead < fileLength)
+            {
+                int read = stream.Read(fileData, totalRead, fileLength - totalRead);
+                if (read == 0) break;
+                totalRead += read;
+            }
+
+            // 讀取結束符號 \n
+            if (stream.DataAvailable) stream.ReadByte();
+
+            File.WriteAllBytes(localSavePath, fileData);
         }
 
         private void DisplayData()
