@@ -237,28 +237,32 @@ namespace VNA_Data_Grabber
                         rec.TraceResult = (ReadResponse(stream) == "1") ? "Fail" : "Pass";
                         records.Add(rec);
 
-                        // 3. 儲存 Trace 的 CSV 檔案 (暫時標註)
-                        /*
-                        string vnaCsvPath = $@"{vnaBaseDir}\Tr{tid}.csv";
-                        SendCheckedCommand(stream, $":MMEMory:STORe:DATA \"{vnaCsvPath}\",\"CSV\",\"FDATA\",\"ALL\",1");
-                        System.Threading.Thread.Sleep(500); 
+                        // 3. 儲存 Trace 的 CSV 檔案
+
+                        string vnaCsvPath = $@"{vnaBaseDir}\Tr{tid}_CH1.csv";
+                        SendCheckedCommand(stream, $":MMEMory:STORe:DATA \"{vnaCsvPath}\", \"CSV Formatted Data\", \"Trace\", \"Auto\", {tid}");
+                        System.Threading.Thread.Sleep(500);
                         DownloadBinaryFile(stream, vnaCsvPath, Path.Combine(localDir, $"Tr{tid}_CH1.csv"));
-                        */
+
                     }
+                    
+                    // 4. 儲存 Touchstone .s4p
+                    for(int x = 1; x <= 1; x++)
+                    {
+                        string vnaS4pPath = $@"{vnaBaseDir}\{baseName}_CH{x}.s4p";
+                        SendCheckedCommand(stream, $":CALCulate1:DATA:SNP:PORTs:SAVE \"1,2,3,4\", \"{vnaS4pPath}\"");
+                        System.Threading.Thread.Sleep(1000);
+                        DownloadBinaryFile(stream, vnaS4pPath, Path.Combine(localDir, $"{baseName}__CH{x}.s4p"));
 
-                    // 4. 儲存 Touchstone .s4p (使用您驗證成功的指令)
-                    string vnaS4pPath = $@"{vnaBaseDir}\{baseName}.s4p";
-                    SendCheckedCommand(stream, $":CALCulate1:DATA:SNP:PORTs:SAVE \"1,2,3,4\", \"{vnaS4pPath}\"");
-                    System.Threading.Thread.Sleep(1000); 
-                    DownloadBinaryFile(stream, vnaS4pPath, Path.Combine(localDir, $"{baseName}_CH1.s4p"));
+                        // 5. 儲存螢幕截圖 .bmp
+                        string vnaBmpPath = $@"{vnaBaseDir}\{baseName}_CH{x}.bmp";
+                        SendCheckedCommand(stream, $":HCOPy:FILE \"{vnaBmpPath}\"");
+                        System.Threading.Thread.Sleep(1000);
+                        DownloadBinaryFile(stream, vnaBmpPath, Path.Combine(localDir, $"{baseName}_CH{x}.bmp"));
+                    }
+                    
 
-                    // 5. 儲存螢幕截圖 .bmp (暫時標註)
-                    /*
-                    string vnaBmpPath = $@"{vnaBaseDir}\{baseName}.bmp";
-                    SendCheckedCommand(stream, $":MMEMory:STORe:IMAGe \"{vnaBmpPath}\"");
-                    System.Threading.Thread.Sleep(1000); 
-                    DownloadBinaryFile(stream, vnaBmpPath, Path.Combine(localDir, $"{baseName}_CH1.bmp"));
-                    */
+                    
                 }
             }
             return records;
