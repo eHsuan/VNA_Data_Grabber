@@ -1,8 +1,9 @@
-using System;
-using System.Collections.Generic;
 using CyntecMESEquipment;
+using DocumentFormat.OpenXml.Drawing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 
 namespace VNA_Data_Grabber
 {
@@ -60,7 +61,7 @@ namespace VNA_Data_Grabber
             return Execute(req, userId);
         }
 
-        public MESResponse EDCDATAADD(string orderNo, string userId, JArray dataList, JArray? inputList = null)
+        public MESResponse EDCDATAADD(string orderNo, string userId, JArray dataList)
         {
             var req = new JObject();
             req["TransactionName"] = "EDCDATAADD";
@@ -70,28 +71,36 @@ namespace VNA_Data_Grabber
             req["IsLast"] = "Y";
             req["ISCOMPONENTMODE"] = "N";
             req["dtEDCRawData"] = dataList;
-            
-            // 將管理項目放入 EDCDATAADD，且轉為字串格式
-            if (inputList != null)
-            {
-                req["InputListDt"] = inputList.ToString(Formatting.None);
-            }
 
             return Execute(req, userId);
         }
 
-        public MESResponse WOCHECKOUT(string orderNo, string userId, int outputQty, JArray? ngList = null)
+        public MESResponse WOCHECKOUT(string orderNo, string userId, int outputQty, JArray? ngList = null, JArray? inputList = null, JArray? checkList = null, JArray? paraList = null )
         {
             var req = new JObject();
             req["TransactionName"] = "WOCHECKOUT";
             req["EqpNo"] = _machNo;
             req["UserID"] = userId;
             req["WONO"] = orderNo;
-            req["ComponentBatchOut"] = "N";
+            //req["ComponentBatchOut"] = "Y";
+            req["File"] = "";
             req["Operator"] = userId;
             req["OutPut"] = outputQty;
             if (ngList != null) req["NGListDt"] = ngList.ToString(Formatting.None);
-
+            
+            // 將管理項目正確放入 WOCHECKOUT，且轉為字串格式
+            if (inputList != null)
+            {
+                req["InputListDt"] = inputList.ToString(Formatting.None);
+            }
+            if (checkList != null)
+            {
+                req["CheckItemDt"] = checkList.ToString(Formatting.None);
+            }
+            if (paraList != null)
+            {
+                req["ParmListDt"] = paraList.ToString(Formatting.None);
+            }
             return Execute(req, userId);
         }
 

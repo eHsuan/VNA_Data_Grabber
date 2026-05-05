@@ -363,7 +363,7 @@ namespace VNA_Data_Grabber
             string wo = txtOrderNo.Text.Trim();
             if (_currentSessionData.Count == 0) { MessageBox.Show("請先讀取儀器資料"); return; }
 
-            // 準備管理項目資料 (InputListDt)
+            // 1. 準備管理項目資料 (InputListDt)
             JArray inputList = new JArray();
             foreach (DataGridViewRow row in dgvManagement.Rows)
             {
@@ -374,15 +374,17 @@ namespace VNA_Data_Grabber
                     MessageBox.Show($"項目「{row.Cells[1].Value}」尚未完成，無法出站。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-                inputList.Add(new JObject { ["InputCode"] = code, ["InputValue"] = result });
+                inputList.Add(new JObject { ["InputCode"] = code, ["InputValue"] = result});
             }
+            JArray checkList = new JArray();
+            checkList.Add(new JObject { ["ParamName"] = "ELECTRICAL_TESTING3", ["ParamValue"] = "-1.25" });
+            JArray paraList = new JArray();
+            paraList.Add(new JObject { ["ParamCode"] = "ELECTRICAL_TESTING3", ["ParamValue"] = "-1.25" });
 
-            // 1. 上傳資料：dtEDCRawData 為空陣列，但帶入管理項目 InputListDt
-            var resData = _mesService?.EDCDATAADD(wo, _currentUserId, new JArray(), inputList);
-            if (resData == null || !resData.IsSuccess) { MessageBox.Show("資料上傳失敗: " + resData?.Message); return; }
-
-            // 2. 執行工單出站 (不再重複傳送管理項目)
-            var resOut = _mesService?.WOCHECKOUT(wo, _currentUserId, 1);
+            // 2. 執行工單出站：直接執行 WOCHECKOUT 並帶入管理項目結果，不再執行 EDCDATAADD
+            UpdateStatus("正在執行工單出站...", false);
+            var resOut = _mesService?.WOCHECKOUT(wo, _currentUserId, Convert.ToInt16(txtWipQty.Text), null, inputList, checkList, paraList);
+            
             if (resOut != null && resOut.IsSuccess)
             {
                 UpdateStatus("工單出站成功", true);
