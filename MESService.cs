@@ -48,6 +48,20 @@ namespace VNA_Data_Grabber
             return Execute(req, userId);
         }
 
+        public MESResponse WOMeasurePlanQry(string orderNo, string userId, string flowId, string matNo)
+        {
+            var req = new
+            {
+                TransactionName = "EdcPlanGet",
+                EqpNo = _machNo,
+                WONo = orderNo,
+                UserID = userId,
+                FlowID = flowId,
+                MatNo = matNo
+            };
+            return Execute(req, userId);
+        }
+
         public MESResponse WOCHECKIN(string orderNo, string userId, JArray? inputList = null)
         {
             var req = new JObject();
@@ -61,15 +75,16 @@ namespace VNA_Data_Grabber
             return Execute(req, userId);
         }
 
-        public MESResponse EDCDATAADD(string orderNo, string userId, JArray dataList)
+        public MESResponse EDCDATAADD(string orderNo, string userId, string flowId, JArray dataList, string isComponentMode = "N")
         {
             var req = new JObject();
             req["TransactionName"] = "EDCDATAADD";
             req["EqpNo"] = _machNo;
             req["WONO"] = orderNo;
+            req["FlowID"] = flowId;
             req["UserID"] = userId;
             req["IsLast"] = "Y";
-            req["ISCOMPONENTMODE"] = "N";
+            req["ISCOMPONENTMODE"] = isComponentMode;
             req["dtEDCRawData"] = dataList;
 
             return Execute(req, userId);

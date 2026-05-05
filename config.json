@@ -4,5 +4,5 @@
   "MarkerCount": "5",
   "MachNo": "EM0357",
   "MesUrl": "http://twcynmes01.delta.corp/CyntecDataCenter/service/Eqp/Eqp_Portal.asmx",
-  "TestMode": true
+  "TestMode": false
 }

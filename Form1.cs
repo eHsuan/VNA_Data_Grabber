@@ -26,6 +26,7 @@ namespace VNA_Data_Grabber
         private string _currentUserId = "";
         private string _currentUserName = "";
         private JToken? _currentWoInfo;
+        private List<ParameterMap> _parameterMapping = new List<ParameterMap>();
         private AppConfig _lastLoadedConfig = new AppConfig();
 
         // 閒置計時器 (15分鐘)
@@ -311,6 +312,7 @@ namespace VNA_Data_Grabber
                 {
                     txtCheckInUser.Text = $"{_currentUserId}-{_currentUserName} (已進站)";
                     ParseInputCodeList(res.GetValue<string>("InputCodeListDT"));
+                    ParseParameterMapping(res.GetValue<string>("InputParamListDT"));
                     btnMesTrackIn.Enabled = false;
                     UpdateStatus("工單查詢成功 (此工單已進站)", true);
                 }
@@ -318,11 +320,103 @@ namespace VNA_Data_Grabber
                 {
                     txtCheckInUser.Clear();
                     dgvManagement.Rows.Clear();
+                    _parameterMapping.Clear();
                     btnMesTrackIn.Enabled = true;
                     UpdateStatus("工單查詢成功 (尚未進站)", true);
                 }
             }
             else MessageBox.Show("查詢失敗: " + res?.Message);
+        }
+
+        private void ParseParameterMapping(string? json)
+        {
+            _parameterMapping.Clear();
+            if (string.IsNullOrEmpty(json)) return;
+            try
+            {
+                JArray items = JArray.Parse(json);
+                foreach (var item in items)
+                {
+                    _parameterMapping.Add(new ParameterMap
+                    {
+                        ParamName = item["ParamName"]?.ToString() ?? "",
+                        RefFieldCode = item["RefFieldCode"]?.ToString() ?? ""
+                    });
+                }
+            }
+            catch { }
+        }
+
+        private JArray PrepareEdcData()
+        {
+            JArray edcData = new JArray();
+            string matNo = txtMatNo.Text.Trim();
+            int sortIndex = 1;
+
+            foreach (var rec in _currentSessionData)
+            {
+                foreach (var marker in rec.Markers)
+                {
+                    // 模糊匹配頻率: 13.000GHz -> 13GHz
+                    string fuzzyMarker = marker.Name.Replace(".000", "");
+                    
+                    var matches = _parameterMapping.Where(p => p.ParamName.Contains(fuzzyMarker)).ToList();
+                    foreach (var match in matches)
+                    {
+                        edcData.Add(new JObject
+                        {
+                            ["COMPONENTNO"] = matNo,
+                            ["FIELDCODE"] = match.RefFieldCode,
+                            ["VALUE"] = marker.Value,
+                            ["Memo"] = $"Trace {rec.TraceNum}",
+                            ["SORTINDEX"] = sortIndex.ToString()
+                        });
+                    }
+                }
+                sortIndex++;
+            }
+            return edcData;
+        }
+
+        private void btnMesMeasurePlan_Click(object sender, EventArgs e)
+        {
+            string wo = txtOrderNo.Text.Trim();
+            if (string.IsNullOrEmpty(wo)) { MessageBox.Show("請輸入工單號碼"); return; }
+
+            // 從 WOQRY 儲存的資訊中取得 FlowID 與 MatNo
+            string flowId = _currentWoInfo?["FlowID"]?.ToString() ?? "";
+            string matNo = txtMatNo.Text.Trim();
+
+            UpdateStatus("正在查詢量測計畫 (EdcPlanGet)...", false);
+            var res = _mesService?.WOMeasurePlanQry(wo, _currentUserId, flowId, matNo);
+            if (res != null)
+            {
+                txtDisplay.Text = res.RawJson;
+                UpdateStatus("量測計畫查詢完成", true);
+            }
+            else MessageBox.Show("查詢失敗，未收到回覆。");
+        }
+
+        private void btnMesEdcUpload_Click(object sender, EventArgs e)
+        {
+            string wo = txtOrderNo.Text.Trim();
+            if (string.IsNullOrEmpty(wo)) { MessageBox.Show("請輸入工單號碼"); return; }
+            if (_currentSessionData.Count == 0) { MessageBox.Show("請先讀取儀器資料"); return; }
+
+            string flowId = _currentWoInfo?["FlowID"]?.ToString() ?? "";
+            
+            UpdateStatus("正在上傳量測數據 (EDCDATAADD)...", false);
+            JArray edcData = PrepareEdcData();
+            if (edcData.Count == 0) { MessageBox.Show("未匹配到任何量測計畫參數，請確認頻率名稱。"); return; }
+
+            var res = _mesService?.EDCDATAADD(wo, _currentUserId, flowId, edcData, "N");
+            if (res != null)
+            {
+                txtDisplay.Text = res.RawJson;
+                if (res.IsSuccess) UpdateStatus("量測數據上傳成功", true);
+                else MessageBox.Show("上傳失敗: " + res.Message);
+            }
+            else MessageBox.Show("上傳失敗，未收到回覆。");
         }
 
         private void btnMesTrackIn_Click(object sender, EventArgs e)
@@ -361,9 +455,31 @@ namespace VNA_Data_Grabber
         private void btnMesTrackOut_Click(object sender, EventArgs e)
         {
             string wo = txtOrderNo.Text.Trim();
+            if (string.IsNullOrEmpty(wo)) { MessageBox.Show("請輸入工單號碼"); return; }
             if (_currentSessionData.Count == 0) { MessageBox.Show("請先讀取儀器資料"); return; }
 
-            // 1. 準備管理項目資料 (InputListDt)
+            string flowId = _currentWoInfo?["FlowID"]?.ToString() ?? "";
+
+            // 1. 自動 EDC 上報
+            UpdateStatus("正在執行 EDC 數據上傳...", false);
+            JArray edcData = PrepareEdcData();
+            if (edcData.Count > 0)
+            {
+                var resEdc = _mesService?.EDCDATAADD(wo, _currentUserId, flowId, edcData, "N");
+                txtDisplay.Text = resEdc?.RawJson;
+                if (resEdc == null || !resEdc.IsSuccess)
+                {
+                    MessageBox.Show("EDC 上報失敗，出站流程中斷。\n錯誤訊息: " + resEdc?.Message);
+                    return;
+                }
+                UpdateStatus("EDC 上報成功，執行出站中...", true);
+            }
+            else
+            {
+                if (MessageBox.Show("未匹配到任何量測計畫參數，是否直接嘗試出站？", "提示", MessageBoxButtons.YesNo) == DialogResult.No) return;
+            }
+
+            // 2. 執行工單出站 (準備管理項目)
             JArray inputList = new JArray();
             foreach (DataGridViewRow row in dgvManagement.Rows)
             {
@@ -374,17 +490,10 @@ namespace VNA_Data_Grabber
                     MessageBox.Show($"項目「{row.Cells[1].Value}」尚未完成，無法出站。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-                inputList.Add(new JObject { ["InputCode"] = code, ["InputValue"] = result});
+                inputList.Add(new JObject { ["InputCode"] = code, ["InputValue"] = result });
             }
-            JArray checkList = new JArray();
-            checkList.Add(new JObject { ["ParamName"] = "ELECTRICAL_TESTING3", ["ParamValue"] = "-1.25" });
-            JArray paraList = new JArray();
-            paraList.Add(new JObject { ["ParamCode"] = "ELECTRICAL_TESTING3", ["ParamValue"] = "-1.25" });
 
-            // 2. 執行工單出站：直接執行 WOCHECKOUT 並帶入管理項目結果，不再執行 EDCDATAADD
-            UpdateStatus("正在執行工單出站...", false);
-            var resOut = _mesService?.WOCHECKOUT(wo, _currentUserId, Convert.ToInt16(txtWipQty.Text), null, inputList, checkList, paraList);
-            
+            var resOut = _mesService?.WOCHECKOUT(wo, _currentUserId, Convert.ToInt16(txtWipQty.Text), null, inputList, null, null);
             if (resOut != null && resOut.IsSuccess)
             {
                 UpdateStatus("工單出站成功", true);
@@ -400,6 +509,8 @@ namespace VNA_Data_Grabber
             txtMesUserId.Enabled = !loggedIn;
             btnMesLogout.Enabled = loggedIn;
             btnMesQuery.Enabled = loggedIn;
+            btnMesMeasurePlan.Enabled = loggedIn;
+            btnMesEdcUpload.Enabled = loggedIn;
             btnMesTrackIn.Enabled = false; 
             btnMesTrackOut.Enabled = loggedIn;
             txtOrderNo.Enabled = loggedIn;
@@ -438,5 +549,6 @@ namespace VNA_Data_Grabber
 
         public class MarkerInfo { public string Name { get; set; } = ""; public string Value { get; set; } = ""; }
         public class TraceRecord { public string TraceNum { get; set; } = ""; public string TraceResult { get; set; } = ""; public List<MarkerInfo> Markers { get; set; } = new List<MarkerInfo>(); }
+        public class ParameterMap { public string ParamName { get; set; } = ""; public string RefFieldCode { get; set; } = ""; }
     }
 }

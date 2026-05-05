@@ -38,7 +38,9 @@ namespace VNA_Data_Grabber
             this.txtMesUserId = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.btnMesTrackOut = new System.Windows.Forms.Button();
+            this.btnMesEdcUpload = new System.Windows.Forms.Button();
             this.btnMesTrackIn = new System.Windows.Forms.Button();
+            this.btnMesMeasurePlan = new System.Windows.Forms.Button();
             this.btnMesQuery = new System.Windows.Forms.Button();
             this.grpOrderInfo = new System.Windows.Forms.GroupBox();
             this.label12 = new System.Windows.Forms.Label();
@@ -72,7 +74,7 @@ namespace VNA_Data_Grabber
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(12, 315);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(71, 12);
+            this.label1.Size = new System.Drawing.Size(72, 12);
             this.label1.TabIndex = 0;
             this.label1.Text = "儀器 IP 位址:";
             // 
@@ -89,7 +91,7 @@ namespace VNA_Data_Grabber
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(200, 315);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(78, 12);
+            this.label3.Size = new System.Drawing.Size(75, 12);
             this.label3.TabIndex = 4;
             this.label3.Text = "Trace (如 1,2):";
             // 
@@ -130,7 +132,6 @@ namespace VNA_Data_Grabber
             this.txtDisplay.Location = new System.Drawing.Point(12, 345);
             this.txtDisplay.Name = "txtDisplay";
             this.txtDisplay.ReadOnly = true;
-            this.txtDisplay.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Both;
             this.txtDisplay.Size = new System.Drawing.Size(791, 110);
             this.txtDisplay.TabIndex = 8;
             this.txtDisplay.Text = "";
@@ -148,7 +149,7 @@ namespace VNA_Data_Grabber
             // lblStatus
             // 
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(74, 17);
+            this.lblStatus.Size = new System.Drawing.Size(73, 17);
             this.lblStatus.Text = "狀態: 待機中";
             // 
             // label4
@@ -176,14 +177,27 @@ namespace VNA_Data_Grabber
             this.grpMES.Controls.Add(this.txtMesUserId);
             this.grpMES.Controls.Add(this.label5);
             this.grpMES.Controls.Add(this.btnMesTrackOut);
+            this.grpMES.Controls.Add(this.btnMesEdcUpload);
             this.grpMES.Controls.Add(this.btnMesTrackIn);
+            this.grpMES.Controls.Add(this.btnMesMeasurePlan);
             this.grpMES.Controls.Add(this.btnMesQuery);
             this.grpMES.Location = new System.Drawing.Point(12, 12);
             this.grpMES.Name = "grpMES";
-            this.grpMES.Size = new System.Drawing.Size(791, 75);
+            this.grpMES.Size = new System.Drawing.Size(791, 110);
             this.grpMES.TabIndex = 12;
             this.grpMES.TabStop = false;
             this.grpMES.Text = "MES 整合功能";
+            // 
+            // btnMesEdcUpload
+            // 
+            this.btnMesEdcUpload.Enabled = false;
+            this.btnMesEdcUpload.Location = new System.Drawing.Point(543, 45);
+            this.btnMesEdcUpload.Name = "btnMesEdcUpload";
+            this.btnMesEdcUpload.Size = new System.Drawing.Size(120, 25);
+            this.btnMesEdcUpload.TabIndex = 11;
+            this.btnMesEdcUpload.Text = "2.1 資料上傳 (EDC)";
+            this.btnMesEdcUpload.UseVisualStyleBackColor = true;
+            this.btnMesEdcUpload.Click += new System.EventHandler(this.btnMesEdcUpload_Click);
             // 
             // lblMesUser
             // 
@@ -191,7 +205,7 @@ namespace VNA_Data_Grabber
             this.lblMesUser.ForeColor = System.Drawing.Color.Blue;
             this.lblMesUser.Location = new System.Drawing.Point(10, 52);
             this.lblMesUser.Name = "lblMesUser";
-            this.lblMesUser.Size = new System.Drawing.Size(80, 12);
+            this.lblMesUser.Size = new System.Drawing.Size(83, 12);
             this.lblMesUser.TabIndex = 9;
             this.lblMesUser.Text = "登入狀態: 離線";
             // 
@@ -222,6 +236,7 @@ namespace VNA_Data_Grabber
             this.txtMesUserId.Name = "txtMesUserId";
             this.txtMesUserId.Size = new System.Drawing.Size(180, 22);
             this.txtMesUserId.TabIndex = 4;
+            this.txtMesUserId.Text = "{{{{791869{A1{{{984ebe3d5f244fc19554c83e416959cb";
             // 
             // label5
             // 
@@ -253,6 +268,17 @@ namespace VNA_Data_Grabber
             this.btnMesTrackIn.Text = "2. 工單進站";
             this.btnMesTrackIn.UseVisualStyleBackColor = true;
             this.btnMesTrackIn.Click += new System.EventHandler(this.btnMesTrackIn_Click);
+            // 
+            // btnMesMeasurePlan
+            // 
+            this.btnMesMeasurePlan.Enabled = false;
+            this.btnMesMeasurePlan.Location = new System.Drawing.Point(435, 18);
+            this.btnMesMeasurePlan.Name = "btnMesMeasurePlan";
+            this.btnMesMeasurePlan.Size = new System.Drawing.Size(100, 25);
+            this.btnMesMeasurePlan.TabIndex = 10;
+            this.btnMesMeasurePlan.Text = "量測計畫查詢";
+            this.btnMesMeasurePlan.UseVisualStyleBackColor = true;
+            this.btnMesMeasurePlan.Click += new System.EventHandler(this.btnMesMeasurePlan_Click);
             // 
             // btnMesQuery
             // 
@@ -411,6 +437,7 @@ namespace VNA_Data_Grabber
             this.txtOrderNo.Name = "txtOrderNo";
             this.txtOrderNo.Size = new System.Drawing.Size(90, 22);
             this.txtOrderNo.TabIndex = 1;
+            this.txtOrderNo.Text = "2F26429FCTZ1";
             // 
             // grpManagement
             // 
@@ -443,10 +470,10 @@ namespace VNA_Data_Grabber
             // 
             // colInputCode
             // 
+            this.colInputCode.FillWeight = 50F;
             this.colInputCode.HeaderText = "編號";
             this.colInputCode.Name = "colInputCode";
             this.colInputCode.ReadOnly = true;
-            this.colInputCode.FillWeight = 50F;
             // 
             // colItemName
             // 
@@ -456,10 +483,10 @@ namespace VNA_Data_Grabber
             // 
             // colResult
             // 
+            this.colResult.FillWeight = 50F;
             this.colResult.HeaderText = "結果";
             this.colResult.Name = "colResult";
             this.colResult.ReadOnly = true;
-            this.colResult.FillWeight = 50F;
             // 
             // Form1
             // 
@@ -510,7 +537,9 @@ namespace VNA_Data_Grabber
         private System.Windows.Forms.TextBox txtMarkerCount;
         private System.Windows.Forms.GroupBox grpMES;
         private System.Windows.Forms.Button btnMesTrackOut;
+        private System.Windows.Forms.Button btnMesEdcUpload;
         private System.Windows.Forms.Button btnMesTrackIn;
+        private System.Windows.Forms.Button btnMesMeasurePlan;
         private System.Windows.Forms.Button btnMesQuery;
         private System.Windows.Forms.Button btnMesLogout;
         private System.Windows.Forms.Button btnMesLogin;
