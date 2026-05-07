@@ -74,7 +74,7 @@ namespace VNA_Data_Grabber
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(12, 315);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(72, 12);
+            this.label1.Size = new System.Drawing.Size(79, 13);
             this.label1.TabIndex = 0;
             this.label1.Text = "儀器 IP 位址:";
             // 
@@ -91,7 +91,7 @@ namespace VNA_Data_Grabber
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(200, 315);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(75, 12);
+            this.label3.Size = new System.Drawing.Size(78, 13);
             this.label3.TabIndex = 4;
             this.label3.Text = "Trace (如 1,2):";
             // 
@@ -121,6 +121,7 @@ namespace VNA_Data_Grabber
             this.btnSave.TabIndex = 7;
             this.btnSave.Text = "手動存 Excel";
             this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Visible = false;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // txtDisplay
@@ -141,16 +142,16 @@ namespace VNA_Data_Grabber
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(40, 40);
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.lblStatus});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 463);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 434);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(815, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(815, 51);
             this.statusStrip1.TabIndex = 9;
             this.statusStrip1.Text = "statusStrip1";
             // 
             // lblStatus
             // 
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(73, 17);
+            this.lblStatus.Size = new System.Drawing.Size(182, 38);
             this.lblStatus.Text = "狀態: 待機中";
             // 
             // label4
@@ -158,7 +159,7 @@ namespace VNA_Data_Grabber
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(400, 315);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(57, 12);
+            this.label4.Size = new System.Drawing.Size(61, 13);
             this.label4.TabIndex = 10;
             this.label4.Text = "Marker 數:";
             // 
@@ -195,7 +196,7 @@ namespace VNA_Data_Grabber
             this.lblMesUser.ForeColor = System.Drawing.Color.Blue;
             this.lblMesUser.Location = new System.Drawing.Point(10, 52);
             this.lblMesUser.Name = "lblMesUser";
-            this.lblMesUser.Size = new System.Drawing.Size(83, 12);
+            this.lblMesUser.Size = new System.Drawing.Size(91, 13);
             this.lblMesUser.TabIndex = 9;
             this.lblMesUser.Text = "登入狀態: 離線";
             // 
@@ -233,7 +234,7 @@ namespace VNA_Data_Grabber
             this.label5.AutoSize = true;
             this.label5.Location = new System.Drawing.Point(12, 24);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(92, 12);
+            this.label5.Size = new System.Drawing.Size(101, 13);
             this.label5.TabIndex = 3;
             this.label5.Text = "刷入人員二維碼:";
             // 
@@ -280,6 +281,7 @@ namespace VNA_Data_Grabber
             this.btnMesMeasurePlan.TabIndex = 10;
             this.btnMesMeasurePlan.Text = "量測計畫查詢";
             this.btnMesMeasurePlan.UseVisualStyleBackColor = true;
+            this.btnMesMeasurePlan.Visible = false;
             this.btnMesMeasurePlan.Click += new System.EventHandler(this.btnMesMeasurePlan_Click);
             // 
             // btnMesQuery
@@ -321,7 +323,7 @@ namespace VNA_Data_Grabber
             this.label12.AutoSize = true;
             this.label12.Location = new System.Drawing.Point(540, 55);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(56, 12);
+            this.label12.Size = new System.Drawing.Size(62, 13);
             this.label12.TabIndex = 13;
             this.label12.Text = "進站人員:";
             // 
@@ -339,7 +341,7 @@ namespace VNA_Data_Grabber
             this.label11.AutoSize = true;
             this.label11.Location = new System.Drawing.Point(360, 55);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(56, 12);
+            this.label11.Size = new System.Drawing.Size(62, 13);
             this.label11.TabIndex = 11;
             this.label11.Text = "工單數量:";
             // 
@@ -357,7 +359,7 @@ namespace VNA_Data_Grabber
             this.label10.AutoSize = true;
             this.label10.Location = new System.Drawing.Point(12, 55);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(32, 12);
+            this.label10.Size = new System.Drawing.Size(36, 13);
             this.label10.TabIndex = 9;
             this.label10.Text = "料號:";
             // 
@@ -375,7 +377,7 @@ namespace VNA_Data_Grabber
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(540, 25);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(44, 12);
+            this.label9.Size = new System.Drawing.Size(49, 13);
             this.label9.TabIndex = 7;
             this.label9.Text = "投入量:";
             // 
@@ -393,7 +395,7 @@ namespace VNA_Data_Grabber
             this.label8.AutoSize = true;
             this.label8.Location = new System.Drawing.Point(360, 25);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(56, 12);
+            this.label8.Size = new System.Drawing.Size(62, 13);
             this.label8.TabIndex = 5;
             this.label8.Text = "製程名稱:";
             // 
@@ -411,7 +413,7 @@ namespace VNA_Data_Grabber
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(180, 25);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(56, 12);
+            this.label7.Size = new System.Drawing.Size(62, 13);
             this.label7.TabIndex = 3;
             this.label7.Text = "製程編號:";
             // 
@@ -429,7 +431,7 @@ namespace VNA_Data_Grabber
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(12, 25);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(56, 12);
+            this.label2.Size = new System.Drawing.Size(62, 13);
             this.label2.TabIndex = 0;
             this.label2.Text = "工單號碼:";
             // 
@@ -439,7 +441,6 @@ namespace VNA_Data_Grabber
             this.txtOrderNo.Name = "txtOrderNo";
             this.txtOrderNo.Size = new System.Drawing.Size(90, 22);
             this.txtOrderNo.TabIndex = 1;
-            this.txtOrderNo.Text = "2F26429FCTZ1";
             // 
             // grpManagement
             // 
@@ -466,6 +467,7 @@ namespace VNA_Data_Grabber
             this.dgvManagement.Name = "dgvManagement";
             this.dgvManagement.ReadOnly = true;
             this.dgvManagement.RowHeadersVisible = false;
+            this.dgvManagement.RowHeadersWidth = 102;
             this.dgvManagement.RowTemplate.Height = 24;
             this.dgvManagement.Size = new System.Drawing.Size(785, 94);
             this.dgvManagement.TabIndex = 0;
@@ -474,12 +476,14 @@ namespace VNA_Data_Grabber
             // 
             this.colInputCode.FillWeight = 50F;
             this.colInputCode.HeaderText = "編號";
+            this.colInputCode.MinimumWidth = 12;
             this.colInputCode.Name = "colInputCode";
             this.colInputCode.ReadOnly = true;
             // 
             // colItemName
             // 
             this.colItemName.HeaderText = "管理項目";
+            this.colItemName.MinimumWidth = 12;
             this.colItemName.Name = "colItemName";
             this.colItemName.ReadOnly = true;
             // 
@@ -487,6 +491,7 @@ namespace VNA_Data_Grabber
             // 
             this.colResult.FillWeight = 50F;
             this.colResult.HeaderText = "結果";
+            this.colResult.MinimumWidth = 12;
             this.colResult.Name = "colResult";
             this.colResult.ReadOnly = true;
             // 
@@ -542,6 +547,39 @@ namespace VNA_Data_Grabber
         private System.Windows.Forms.Button btnMesEdcUpload;
         private System.Windows.Forms.Button btnMesTrackIn;
         private System.Windows.Forms.Button btnMesMeasurePlan;
+        private System.Windows.Forms.Button btnMesQuery;
+        private System.Windows.Forms.Button btnMesLogout;
+        private System.Windows.Forms.Button btnMesLogin;
+        private System.Windows.Forms.TextBox txtMesUserId;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label lblMesUser;
+        private System.Windows.Forms.GroupBox grpOrderInfo;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.TextBox txtCheckInUser;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.TextBox txtWipQty;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.TextBox txtMatNo;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.TextBox txtRefInputQty;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.TextBox txtWorkCenterName;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.TextBox txtWorkCenterNo;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtOrderNo;
+        private System.Windows.Forms.GroupBox grpManagement;
+        private System.Windows.Forms.DataGridView dgvManagement;
+        private System.Windows.Forms.Label labelEmployeeId;
+        private System.Windows.Forms.TextBox txtEmployeeId;
+        private System.Windows.Forms.Label labelPassword;
+        private System.Windows.Forms.TextBox txtPassword;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colInputCode;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colItemName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colResult;
+    }
+}
+nMesMeasurePlan;
         private System.Windows.Forms.Button btnMesQuery;
         private System.Windows.Forms.Button btnMesLogout;
         private System.Windows.Forms.Button btnMesLogin;

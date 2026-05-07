@@ -171,6 +171,7 @@ namespace VNA_Data_Grabber
                 }
 
                 DisplayData();
+                SaveToExcel();
             }
             catch (Exception ex) { UpdateStatus("讀取失敗: " + ex.Message, false); MessageBox.Show("詳細錯誤: " + ex.ToString()); }
             finally { btnReadData.Enabled = true; }
@@ -233,8 +234,15 @@ namespace VNA_Data_Grabber
                             string y = ReadResponse(stream).Split(',')[0].Trim();
                             rec.Markers.Add(new MarkerInfo { Name = freq, Value = double.Parse(y).ToString("F6") });
                         }
-                        SendCommand(stream, "CALCulate1:LIMit:FAIL?");
-                        rec.TraceResult = (ReadResponse(stream) == "1") ? "Fail" : "Pass";
+                        //SendCommand(stream, "CALCulate1:LIMit:FAIL?");
+                        SendCommand(stream, ":CONTrol:HANDler:PASSfail:STATus?");
+                        string failRes = ReadResponse(stream);
+                        if (string.IsNullOrEmpty(failRes))
+                        {
+                            failRes = "FAIL";
+                        }
+        
+                        rec.TraceResult = failRes;
                         records.Add(rec);
 
                         // 3. 儲存 Trace 的 CSV 檔案
@@ -321,9 +329,102 @@ namespace VNA_Data_Grabber
                 txtDisplay.AppendText($"Tr{r.TraceNum}: {r.TraceResult} | {string.Join(", ", r.Markers.Select(m => $"{m.Name}:{m.Value}"))}\n");
         }
 
+        private void SaveToExcel()
+        {
+            if (_currentSessionData.Count == 0) return;
+
+            string orderNo = txtOrderNo.Text.Trim();
+            if (string.IsNullOrEmpty(orderNo)) return;
+
+            // 1. 設定儲存路徑與檔名
+            string dirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MeasureData");
+            if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+
+            string fileName = $"{DateTime.Now:yyyyMMdd}.xlsx";
+            string fullPath = Path.Combine(dirPath, fileName);
+
+            try
+            {
+                using (var workbook = File.Exists(fullPath) ? new XLWorkbook(fullPath) : new XLWorkbook())
+                {
+                    var ws = workbook.Worksheets.Count > 0 ? workbook.Worksheet(1) : workbook.Worksheets.Add("Sheet1");
+
+                    // 2. 處理標題列
+                    int currentRow = 1;
+                    if (ws.LastRowUsed() == null)
+                    {
+                        string[] headers = { "時間", "工單號碼", "工單結果", "Trace結果", "Trace編號", 
+                                           "Mark1_Item", "Mark1_Value", "Mark2_Item", "Mark2_Value", 
+                                           "Mark3_Item", "Mark3_Value", "Mark4_Item", "Mark4_Value", 
+                                           "Mark5_Item", "Mark5_Value" };
+                        for (int i = 0; i < headers.Length; i++)
+                        {
+                            var cell = ws.Cell(1, i + 1);
+                            cell.Value = headers[i];
+                            cell.Style.Font.Bold = true;
+                            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                        }
+                        currentRow = 2;
+                    }
+                    else
+                    {
+                        currentRow = ws.LastRowUsed().RowNumber() + 1;
+                    }
+
+                    // 3. 寫入資料 (不區分大小寫比對 PASS)
+                    string timeStr = DateTime.Now.ToString("HH:mm:ss");
+                    bool globalPass = _currentSessionData.All(r => string.Equals(r.TraceResult, "PASS", StringComparison.OrdinalIgnoreCase));
+                    string globalResStr = globalPass ? "PASS" : "FAIL";
+
+                    foreach (var rec in _currentSessionData)
+                    {
+                        ws.Cell(currentRow, 1).Value = timeStr;
+                        ws.Cell(currentRow, 2).Value = orderNo;
+                        ws.Cell(currentRow, 3).Value = globalResStr;
+                        ws.Cell(currentRow, 4).Value = rec.TraceResult;
+                        ws.Cell(currentRow, 5).Value = "Tr" + rec.TraceNum;
+
+                        for (int m = 0; m < 5; m++)
+                        {
+                            if (m < rec.Markers.Count)
+                            {
+                                ws.Cell(currentRow, 6 + (m * 2)).Value = rec.Markers[m].Name;
+                                ws.Cell(currentRow, 7 + (m * 2)).Value = rec.Markers[m].Value;
+                            }
+                        }
+
+                        if (string.Equals(rec.TraceResult, "FAIL", StringComparison.OrdinalIgnoreCase))
+                            ws.Cell(currentRow, 4).Style.Font.FontColor = XLColor.Red;
+                        else
+                            ws.Cell(currentRow, 4).Style.Font.FontColor = XLColor.DarkGreen;
+
+                        ws.Range(currentRow, 1, currentRow, 15).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                        ws.Range(currentRow, 1, currentRow, 15).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                        currentRow++;
+                    }
+
+                    ws.Columns().AdjustToContents();
+                    workbook.SaveAs(fullPath);
+                }
+                UpdateStatus($"Excel 資料已自動儲存至 {fileName}", true);
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus("自動存檔失敗", false);
+            }
+        }
+
         private void btnSave_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("資料已記錄至記憶體，請點擊 MES 上傳功能或手動確認。");
+            if (_currentSessionData.Count == 0)
+            {
+                MessageBox.Show("請先讀取儀器資料後再進行存檔。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            SaveToExcel();
+            MessageBox.Show("量測結果已成功儲存至 MeasureData 資料夾。", "完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         #endregion
 
@@ -598,6 +699,8 @@ namespace VNA_Data_Grabber
         {
             btnMesLogin.Enabled = !loggedIn;
             txtMesUserId.Enabled = !loggedIn;
+            txtEmployeeId.Enabled = !loggedIn;
+            txtPassword.Enabled = !loggedIn;
             btnMesLogout.Enabled = loggedIn;
             btnMesQuery.Enabled = loggedIn;
             btnMesMeasurePlan.Enabled = loggedIn;
@@ -677,6 +780,18 @@ namespace VNA_Data_Grabber
         private void UpdateStatus(string msg, bool success)
         {
             lblStatus.Text = $"最後操作: {msg}";
+            lblStatus.ForeColor = success ? System.Drawing.Color.DarkGreen : System.Drawing.Color.DarkRed;
+        }
+
+        public class MarkerInfo { public string Name { get; set; } = ""; public string Value { get; set; } = ""; }
+        public class TraceRecord { public string TraceNum { get; set; } = ""; public string TraceResult { get; set; } = ""; public List<MarkerInfo> Markers { get; set; } = new List<MarkerInfo>(); }
+        public class ParameterMap { public string ParamName { get; set; } = ""; public string RefFieldCode { get; set; } = ""; }
+    }
+}
+public string RefFieldCode { get; set; } = ""; }
+    }
+}
+atus.Text = $"最後操作: {msg}";
             lblStatus.ForeColor = success ? System.Drawing.Color.DarkGreen : System.Drawing.Color.DarkRed;
         }
 
