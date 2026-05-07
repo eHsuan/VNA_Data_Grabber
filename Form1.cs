@@ -557,7 +557,7 @@ namespace VNA_Data_Grabber
             if (edcData.Count > 0)
             {
                 var resEdc = _mesService?.EDCDATAADD(wo, _currentUserId, flowId, edcData, "N");
-                txtDisplay.Text = resEdc?.RawJson;
+                //txtDisplay.Text = resEdc?.RawJson;
                 if (resEdc == null || !resEdc.IsSuccess)
                 {
                     MessageBox.Show("EDC 上報失敗，出站流程中斷。\n錯誤訊息: " + resEdc?.Message);
@@ -627,9 +627,51 @@ namespace VNA_Data_Grabber
                     sb.Append(Encoding.ASCII.GetString(buffer, 0, read));
                 }
                 if (sb.ToString().Contains("\n")) return sb.ToString().Trim();
-                if ((DateTime.Now - start).TotalMilliseconds > TimeoutMs) throw new Exception("儀器回應逾時。");
+                
+                if ((DateTime.Now - start).TotalMilliseconds > TimeoutMs)
+                {
+                    // 當發生逾時，主動檢查儀器端的 SCPI 錯誤堆疊
+                    string scpiError = GetScpiError(stream);
+                    if (!string.IsNullOrEmpty(scpiError) && !scpiError.Contains("No error"))
+                    {
+                        // 特別捕捉 120 (Numeric data error)，通常代表要求的 Marker 索引在儀器上未開啟
+                        if (scpiError.Contains("120"))
+                        {
+                            throw new Exception($"[儀器設定錯誤] SCPI Error 120: 要求的 Marker 數量超過儀器目前設定。請確認 E5080B 儀器端已開啟至少 {txtMarkerCount.Text} 個 Marker。");
+                        }
+                        throw new Exception($"儀器回應逾時，且偵測到 SCPI 錯誤: {scpiError}");
+                    }
+                    throw new Exception("儀器回應逾時，請檢查儀器連線狀態或 Marker 設定。");
+                }
                 System.Threading.Thread.Sleep(5);
             }
+        }
+
+        private string GetScpiError(NetworkStream stream)
+        {
+            try
+            {
+                // 嘗試發送錯誤查詢指令
+                byte[] data = Encoding.ASCII.GetBytes("SYSTem:ERRor?\n");
+                stream.Write(data, 0, data.Length);
+
+                // 使用較短的等待時間來讀取錯誤訊息
+                StringBuilder sb = new StringBuilder();
+                byte[] buffer = new byte[1024];
+                DateTime start = DateTime.Now;
+                while ((DateTime.Now - start).TotalMilliseconds < 800) 
+                {
+                    if (stream.DataAvailable)
+                    {
+                        int read = stream.Read(buffer, 0, buffer.Length);
+                        sb.Append(Encoding.ASCII.GetString(buffer, 0, read));
+                        if (sb.ToString().Contains("\n")) return sb.ToString().Trim();
+                    }
+                    System.Threading.Thread.Sleep(10);
+                }
+            }
+            catch { }
+            return "";
         }
 
         private void UpdateStatus(string msg, bool success)

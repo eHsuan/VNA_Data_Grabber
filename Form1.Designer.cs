@@ -257,6 +257,7 @@ namespace VNA_Data_Grabber
             this.btnMesEdcUpload.TabIndex = 11;
             this.btnMesEdcUpload.Text = "2.1 資料上傳 (EDC)";
             this.btnMesEdcUpload.UseVisualStyleBackColor = true;
+            this.btnMesEdcUpload.Visible = false;
             this.btnMesEdcUpload.Click += new System.EventHandler(this.btnMesEdcUpload_Click);
             // 
             // btnMesTrackIn
